@@ -248,17 +248,17 @@
     return self;
   }
 
-  function _inheritsLoose(subClass, superClass) {
-    subClass.prototype = Object.create(superClass.prototype);
-    subClass.prototype.constructor = subClass;
-    subClass.__proto__ = superClass;
-  }
-
   function _getPrototypeOf(o) {
     _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) {
       return o.__proto__ || Object.getPrototypeOf(o);
     };
     return _getPrototypeOf(o);
+  }
+
+  function _inheritsLoose(subClass, superClass) {
+    subClass.prototype = Object.create(superClass.prototype);
+    subClass.prototype.constructor = subClass;
+    subClass.__proto__ = superClass;
   }
 
   function _setPrototypeOf(o, p) {
@@ -274,7 +274,7 @@
     return Function.toString.call(fn).indexOf("[native code]") !== -1;
   }
 
-  function isNativeReflectConstruct() {
+  function _isNativeReflectConstruct() {
     if (typeof Reflect === "undefined" || !Reflect.construct) return false;
     if (Reflect.construct.sham) return false;
     if (typeof Proxy === "function") return true;
@@ -288,7 +288,7 @@
   }
 
   function _construct(Parent, args, Class) {
-    if (isNativeReflectConstruct()) {
+    if (_isNativeReflectConstruct()) {
       _construct = Reflect.construct;
     } else {
       _construct = function _construct(Parent, args, Class) {
@@ -774,6 +774,7 @@
     var matchedValue = value.match(cssRegex);
 
     if (unitReturn) {
+      // eslint-disable-next-line no-console
       console.warn("stripUnit's unitReturn functionality has been marked for deprecation in polished 4.0. It's functionality has been been moved to getUnitAndValue.");
       if (matchedValue) return [parseFloat(value), matchedValue[2]];
       return [value, undefined];
@@ -946,7 +947,7 @@
       throw new PolishedError(43);
     }
 
-    var _ref = typeof base === 'string' ? stripUnit(base, true) : [base, ''],
+    var _ref = typeof base === 'string' ? getValueAndUnit(base) : [base, ''],
         realBase = _ref[0],
         unit = _ref[1];
 
@@ -956,7 +957,7 @@
       throw new PolishedError(44, base);
     }
 
-    return "" + realBase * Math.pow(realRatio, steps) + unit;
+    return "" + realBase * Math.pow(realRatio, steps) + (unit || '');
   }
 
   /**
@@ -1018,21 +1019,21 @@
       maxScreen = '1200px';
     }
 
-    var _stripUnit = stripUnit(fromSize, true),
-        unitlessFromSize = _stripUnit[0],
-        fromSizeUnit = _stripUnit[1];
+    var _getValueAndUnit = getValueAndUnit(fromSize),
+        unitlessFromSize = _getValueAndUnit[0],
+        fromSizeUnit = _getValueAndUnit[1];
 
-    var _stripUnit2 = stripUnit(toSize, true),
-        unitlessToSize = _stripUnit2[0],
-        toSizeUnit = _stripUnit2[1];
+    var _getValueAndUnit2 = getValueAndUnit(toSize),
+        unitlessToSize = _getValueAndUnit2[0],
+        toSizeUnit = _getValueAndUnit2[1];
 
-    var _stripUnit3 = stripUnit(minScreen, true),
-        unitlessMinScreen = _stripUnit3[0],
-        minScreenUnit = _stripUnit3[1];
+    var _getValueAndUnit3 = getValueAndUnit(minScreen),
+        unitlessMinScreen = _getValueAndUnit3[0],
+        minScreenUnit = _getValueAndUnit3[1];
 
-    var _stripUnit4 = stripUnit(maxScreen, true),
-        unitlessMaxScreen = _stripUnit4[0],
-        maxScreenUnit = _stripUnit4[1];
+    var _getValueAndUnit4 = getValueAndUnit(maxScreen),
+        unitlessMaxScreen = _getValueAndUnit4[0],
+        maxScreenUnit = _getValueAndUnit4[1];
 
     if (typeof unitlessMinScreen !== 'number' || typeof unitlessMaxScreen !== 'number' || !minScreenUnit || !maxScreenUnit || minScreenUnit !== maxScreenUnit) {
       throw new PolishedError(47);
@@ -1162,6 +1163,12 @@
     };
   }
 
+  function _createForOfIteratorHelperLoose(o) { var i = 0; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray(o))) return function () { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }; throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } i = o[Symbol.iterator](); return i.next.bind(i); }
+
+  function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+  function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
   /**
    * Returns a set of media queries that resizes a property (or set of properties) between a provided fromSize and toSize. Accepts optional minScreen (defaults to '320px') and maxScreen (defaults to '1200px') to constrain the interpolation.
    *
@@ -1221,21 +1228,10 @@
       var mediaQueries = {};
       var fallbacks = {};
 
-      for (var _iterator = cssProp, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
+      for (var _iterator = _createForOfIteratorHelperLoose(cssProp), _step; !(_step = _iterator()).done;) {
         var _extends2, _extends3;
 
-        var _ref;
-
-        if (_isArray) {
-          if (_i >= _iterator.length) break;
-          _ref = _iterator[_i++];
-        } else {
-          _i = _iterator.next();
-          if (_i.done) break;
-          _ref = _i.value;
-        }
-
-        var obj = _ref;
+        var obj = _step.value;
 
         if (!obj.prop || !obj.fromSize || !obj.toSize) {
           throw new PolishedError(50);
@@ -1248,13 +1244,13 @@
 
       return _extends({}, fallbacks, {}, mediaQueries);
     } else {
-      var _ref2, _ref3, _ref4;
+      var _ref, _ref2, _ref3;
 
       if (!cssProp.prop || !cssProp.fromSize || !cssProp.toSize) {
         throw new PolishedError(51);
       }
 
-      return _ref4 = {}, _ref4[cssProp.prop] = cssProp.fromSize, _ref4["@media (min-width: " + minScreen + ")"] = (_ref2 = {}, _ref2[cssProp.prop] = between(cssProp.fromSize, cssProp.toSize, minScreen, maxScreen), _ref2), _ref4["@media (min-width: " + maxScreen + ")"] = (_ref3 = {}, _ref3[cssProp.prop] = cssProp.toSize, _ref3), _ref4;
+      return _ref3 = {}, _ref3[cssProp.prop] = cssProp.fromSize, _ref3["@media (min-width: " + minScreen + ")"] = (_ref = {}, _ref[cssProp.prop] = between(cssProp.fromSize, cssProp.toSize, minScreen, maxScreen), _ref), _ref3["@media (min-width: " + maxScreen + ")"] = (_ref2 = {}, _ref2[cssProp.prop] = cssProp.toSize, _ref2), _ref3;
     }
   }
 
@@ -1979,8 +1975,8 @@
         foregroundColor = _ref.foregroundColor,
         _ref$backgroundColor = _ref.backgroundColor,
         backgroundColor = _ref$backgroundColor === void 0 ? 'transparent' : _ref$backgroundColor;
-    var widthAndUnit = stripUnit(width, true);
-    var heightAndUnit = stripUnit(height, true);
+    var widthAndUnit = getValueAndUnit(width);
+    var heightAndUnit = getValueAndUnit(height);
 
     if (isNaN(heightAndUnit[0]) || isNaN(widthAndUnit[0])) {
       throw new PolishedError(60);
